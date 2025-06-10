@@ -76,7 +76,7 @@ public class BoardPanel extends JPanel {
 
     private boolean shouldDrawShot(Cell cell) {
         if (!isPlayer) {
-            return board.isRevealed(cell) && isShot(cell);
+            return board.isRevealedCell(cell) && isShot(cell);
         } else {
             return isShot(cell);
         }

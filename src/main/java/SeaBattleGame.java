@@ -11,8 +11,8 @@ public class SeaBattleGame {
     public SeaBattleGame(Configuration configuration) {
         this.configuration = configuration;
         random = new Random(configuration.gameSeed());
-        playerBoard = new Board(configuration, false);
-        botBoard = new Board(configuration, true);
+        playerBoard = new Board(configuration);
+        botBoard = new Board(configuration);
         gameOver = false;
     }
 
