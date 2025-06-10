@@ -1,5 +1,3 @@
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
@@ -11,7 +9,7 @@ public class ShipsPlacer {
 
     public ShipsPlacer(Configuration configuration) {
         this.configuration = configuration;
-        this.random = new Random(configuration.shipsSeed());
+        this.random = new Random();
     }
 
     public void placeShips(Cell[][] grid, Map<Cell, Ship> cell2ship) {
@@ -86,24 +84,5 @@ public class ShipsPlacer {
 
     private boolean isAvailableCell(Cell[][] grid, int x, int y) {
         return grid[y][x].getType() == CellType.EMPTY;
-    }
-
-    private enum Direction {
-        LEFT(-1, 0),
-        UP(0, -1),
-        RIGHT(1, 0),
-        DOWN(0, 1);
-
-        final int dx;
-        final int dy;
-
-        Direction(int dx, int dy) {
-            this.dx = dx;
-            this.dy = dy;
-        }
-
-        static Direction random(Random random) {
-            return values()[random.nextInt(values().length)];
-        }
     }
 }

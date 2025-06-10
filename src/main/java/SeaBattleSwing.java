@@ -54,7 +54,7 @@ public class SeaBattleSwing extends JFrame {
     }
 
     public static void main(String[] args) {
-        Configuration configuration = new Configuration(10, 100, 42, 43);
+        Configuration configuration = new Configuration(10, 100);
         SwingUtilities.invokeLater(() -> new SeaBattleSwing(configuration));
     }
 }

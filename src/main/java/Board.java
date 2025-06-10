@@ -17,7 +17,7 @@ public class Board {
         return grid[y][x];
     }
 
-    public Cell getRandomAvailableCell(Random random) {
+    public Optional<Cell> getRandomAvailableCell(Random random) {
         return cellsInfo.getRandomAvailableCell(random);
     }
 
@@ -127,8 +127,10 @@ public class Board {
     }
 
     private record CellsInfo(List<Cell> availableCells, boolean[][] revealed) {
-        public Cell getRandomAvailableCell(Random random) {
-            return availableCells.get(random.nextInt(availableCells.size()));
+        public Optional<Cell> getRandomAvailableCell(Random random) {
+            return !availableCells.isEmpty()
+                ? Optional.of(availableCells.get(random.nextInt(availableCells.size())))
+                : Optional.empty();
         }
 
         public boolean isRevealedCell(Cell cell) {

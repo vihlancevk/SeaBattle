@@ -6,13 +6,15 @@ public class SeaBattleGame {
     private final Random random;
     private final Board playerBoard;
     private final Board botBoard;
+    private final Bot bot;
     private boolean gameOver;
 
     public SeaBattleGame(Configuration configuration) {
         this.configuration = configuration;
-        random = new Random(configuration.gameSeed());
+        random = new Random();
         playerBoard = new Board(configuration);
         botBoard = new Board(configuration);
+        bot = new Bot(configuration, playerBoard);
         gameOver = false;
     }
 
@@ -40,7 +42,7 @@ public class SeaBattleGame {
         }
 
         if (!hit.get()) {
-            botTurn();
+            botShoot();
             if (playerBoard.allShipsSunk()) {
                 gameOver = true;
                 return "Bot wins!";
@@ -50,13 +52,7 @@ public class SeaBattleGame {
         return hit.get() ? "Hit!" : "Miss!";
     }
 
-    private void botTurn() {
-        while (true) {
-            Cell cell = playerBoard.getRandomAvailableCell(random);
-            Optional<Boolean> hit = playerBoard.shoot(cell.x(), cell.y());
-            if (hit.isPresent() && !hit.get()) {
-                break;
-            }
-        }
+    private void botShoot() {
+        bot.shoot(random);
     }
 }
