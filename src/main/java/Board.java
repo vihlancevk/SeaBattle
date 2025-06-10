@@ -1,19 +1,27 @@
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 public class Board {
     private final Configuration configuration;
-    private final Cell[][] grid;
-    private final boolean[][] revealed;
+    private final BoardState boardState;
     private final Map<Cell, Ship> cell2ship;
 
     public Board(Configuration configuration, boolean isBot) {
         this.configuration = configuration;
-        this.grid = initGrid();
-        this.revealed = isBot ? new boolean[configuration.gridSize()][configuration.gridSize()] : null;
+        this.boardState = initBoardState(configuration.gridSize(), isBot);
         this.cell2ship = new HashMap<>();
         placeShips();
+    }
+
+    public Cell getCell(int x, int y) {
+        return boardState.getCell(x, y);
+    }
+
+    public Cell getRandomAvailableCell(Random random) {
+        return boardState.getRandomAvailableCell(random);
+    }
+
+    public boolean isRevealed(Cell cell) {
+        return boardState.isRevealed(cell);
     }
 
     public Optional<Boolean> shoot(int x, int y) {
@@ -33,49 +41,40 @@ public class Board {
         };
     }
 
-    public boolean isRevealed(Cell cell) {
-        return revealed != null && revealed[cell.y()][cell.x()];
-    }
-
-    public Cell getCell(int x, int y) {
-        return grid[y][x];
-    }
-
     public boolean allShipsSunk() {
-        for (int y = 0; y < configuration.gridSize(); y++) {
-            for (int x = 0; x < configuration.gridSize(); x++) {
-                if (grid[y][x].getType() == CellType.SHIP) {
-                    return false;
+        return boardState.allShipsSunk(configuration.gridSize());
+    }
+
+    private BoardState initBoardState(int gridSize, boolean isBot) {
+        Cell[][] grid = new Cell[gridSize][gridSize];
+        List<Cell> cells = !isBot ? new ArrayList<>() : null;
+        boolean[][] revealed = isBot ? new boolean[gridSize][gridSize] : null;
+        for (int y = 0; y < gridSize; y++) {
+            for (int x = 0; x < gridSize; x++) {
+                Cell cell = new Cell(x, y, CellType.EMPTY);
+                grid[y][x] = cell;
+                if (cells != null) {
+                    cells.add(cell);
                 }
             }
         }
-        return true;
-    }
-
-    private Cell[][] initGrid() {
-        Cell[][] grid = new Cell[configuration.gridSize()][configuration.gridSize()];
-        for (int y = 0; y < configuration.gridSize(); y++) {
-            for (int x = 0; x < configuration.gridSize(); x++) {
-                grid[y][x] = new Cell(x, y, CellType.EMPTY);
-            }
-        }
-        return grid;
+        return new BoardState(grid, cells, revealed);
     }
 
     private void placeShips() {
         ShipsPlacer shipsPlacer = new ShipsPlacer(configuration);
-        shipsPlacer.placeShips(grid, cell2ship);
+        shipsPlacer.placeShips(boardState.grid(), cell2ship);
     }
 
     private void handleMiss(int x, int y) {
-        markRevealed(x, y);
-        grid[y][x].setType(CellType.MISS);
+        setRevealed(x, y);
+        boardState.getCell(x, y).setType(CellType.MISS);
     }
 
     private void handleHit(int x, int y) {
         Cell cell = getCell(x, y);
         cell.setType(CellType.HIT);
-        markRevealed(x, y);
+        setRevealed(x, y);
 
         Ship ship = cell2ship.get(cell);
         if (ship != null && ship.isSunken()) {
@@ -84,9 +83,9 @@ public class Board {
     }
 
     private void revealAroundSunkenShip(Ship ship) {
-        for (Cell c : ship.getDecks()) {
-            c.setType(CellType.SUNKEN);
-            revealSurroundingCells(c);
+        for (Cell cell : ship.getDecks()) {
+            cell.setType(CellType.SUNKEN);
+            revealSurroundingCells(cell);
         }
     }
 
@@ -100,7 +99,7 @@ public class Board {
                     Cell neighbor = getCell(nx, ny);
                     if (neighbor.getType() == CellType.EMPTY) {
                         neighbor.setType(CellType.MISS);
-                        markRevealed(nx, ny);
+                        setRevealed(nx, ny);
                     }
                 }
             }
@@ -112,9 +111,45 @@ public class Board {
                y >= 0 && y < configuration.gridSize();
     }
 
-    private void markRevealed(int x, int y) {
-        if (revealed != null) {
-            revealed[y][x] = true;
+    private void setRevealed(int x, int y) {
+        boardState.setRevealed(x, y);
+    }
+
+    private record BoardState(Cell[][] grid, List<Cell> availableCells, boolean[][] revealed) {
+        public Cell getCell(int x, int y) {
+            return grid[y][x];
+        }
+
+        public Cell getRandomAvailableCell(Random random) {
+            if (availableCells == null) {
+                throw new IllegalStateException("Impossible call this method for player board");
+            }
+            return availableCells.get(random.nextInt(availableCells.size()));
+        }
+
+        public boolean isRevealed(Cell cell) {
+            return revealed != null && revealed[cell.y()][cell.x()];
+        }
+
+        public void setRevealed(int x, int y) {
+            if (availableCells != null) {
+                Cell cell = getCell(x, y);
+                availableCells.remove(cell);
+            }
+            if (revealed != null) {
+                revealed[y][x] = true;
+            }
+        }
+
+        public boolean allShipsSunk(int gridSize) {
+            for (int y = 0; y < gridSize; y++) {
+                for (int x = 0; x < gridSize; x++) {
+                    if (grid[y][x].getType() == CellType.SHIP) {
+                        return false;
+                    }
+                }
+            }
+            return true;
         }
     }
 }

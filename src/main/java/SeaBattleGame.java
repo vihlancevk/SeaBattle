@@ -52,13 +52,8 @@ public class SeaBattleGame {
 
     private void botTurn() {
         while (true) {
-            int x = random.nextInt(configuration.gridSize());
-            int y = random.nextInt(configuration.gridSize());
-            Cell cell = playerBoard.getCell(x, y);
-            if (cell.getType() == CellType.MISS || cell.getType() == CellType.HIT) {
-                continue;
-            }
-            Optional<Boolean> hit = playerBoard.shoot(x, y);
+            Cell cell = playerBoard.getRandomAvailableCell(random);
+            Optional<Boolean> hit = playerBoard.shoot(cell.x(), cell.y());
             if (hit.isPresent() && !hit.get()) {
                 break;
             }
